@@ -274,44 +274,46 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     const Text('Have a friend\'s code?',
                         style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
-                    Row(
+                    Column(
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _codeController,
-                            style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2),
-                            textCapitalization: TextCapitalization.characters,
-                            maxLength: 6,
-                            decoration: InputDecoration(
-                              hintText: 'XXXXXX',
-                              hintStyle: const TextStyle(color: Colors.white24, letterSpacing: 4),
-                              filled: true,
-                              fillColor: const Color(0xFF1A1A2E),
-                              counterText: '',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 1),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 2),
-                              ),
+                        TextField(
+                          controller: _codeController,
+                          style: const TextStyle(color: Colors.white, fontSize: 20, letterSpacing: 4),
+                          textCapitalization: TextCapitalization.characters,
+                          maxLength: 6,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            hintText: 'Enter Code',
+                            hintStyle: const TextStyle(color: Colors.white24, letterSpacing: 2),
+                            filled: true,
+                            fillColor: const Color(0xFF1A1A2E),
+                            counterText: '',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 1),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.white12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 2),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed: _applyCode,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryPurple,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _applyCode,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryPurple,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Apply Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           ),
-                          child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),

@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/task_model.dart';
 
 /// Central service for all Firestore read/write operations.
 class UserService {
-  static final _firestore = FirebaseFirestore.instance;
+  static final _firestore = FirebaseFirestore.instanceFor(
+    app: Firebase.app(),
+    databaseId: 'saynoteai',
+  );
   static String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   // ─── Profile ───────────────────────────────────────────────────────────────

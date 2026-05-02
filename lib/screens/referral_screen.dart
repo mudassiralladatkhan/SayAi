@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
 import '../services/referral_service.dart';
 
@@ -12,6 +13,13 @@ class ReferralScreen extends StatefulWidget {
 
 class _ReferralScreenState extends State<ReferralScreen> {
   String _myCode = '';
+  String get _referralLink =>
+      'https://saynoteai.carrd.co/?ref=$_myCode';
+  String get _shareMessage =>
+      '🎉 SayNote AI - Apna AI life assistant try karo!\n\nMain isko use kar raha hoon aur yeh kamal ka hai. '
+      'Isse download karo aur mera referral code **$_myCode** enter karo — tujhe 3 bonus days milenge FREE! 🎁\n\n'
+      'Download link: $_referralLink';
+
   int _referralCount = 0;
   int _rewardDays = 0;
   bool _isLoading = true;
@@ -69,6 +77,27 @@ class _ReferralScreenState extends State<ReferralScreen> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+    );
+  }
+
+  void _copyLink() {
+    if (_myCode == '------') return;
+    Clipboard.setData(ClipboardData(text: _referralLink));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Referral link copied! 🔗'),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _shareLink() {
+    if (_myCode == '------') return;
+    Share.share(
+      _shareMessage,
+      subject: 'SayNote AI - Try karo yaar! 🚀',
     );
   }
 
@@ -215,6 +244,32 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         const Text(
                           'Tap the icon to copy your code',
                           style: TextStyle(color: Colors.white38, fontSize: 12),
+                        ),
+                        const SizedBox(height: 20),
+                        // Referral Link
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'saynoteai.carrd.co/?ref=$_myCode',
+                            style: const TextStyle(color: Colors.white60, fontSize: 11, fontFamily: 'monospace'),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Share / Copy buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildActionBtn(Icons.share_rounded, 'Share', AppTheme.primaryPurple, _shareLink),
+                            const SizedBox(width: 10),
+                            _buildActionBtn(Icons.link_rounded, 'Copy Link', Colors.blue, _copyLink),
+                            const SizedBox(width: 10),
+                            _buildActionBtn(Icons.copy_rounded, 'Copy Code', Colors.orange, _copyCode),
+                          ],
                         ),
                       ],
                     ),
@@ -384,6 +439,28 @@ class _ReferralScreenState extends State<ReferralScreen> {
           const SizedBox(width: 12),
           Expanded(child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14))),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }

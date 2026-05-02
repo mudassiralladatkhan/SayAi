@@ -28,13 +28,30 @@ class _ReferralScreenState extends State<ReferralScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    _myCode = await ReferralService.getOrCreateCode();
-    _referralCount = await ReferralService.getReferralCount();
-    _rewardDays = await ReferralService.getRewardDays();
-    _wasReferred = await ReferralService.wasReferred();
-    _leaderboard = await ReferralService.getLeaderboard();
+    try {
+      // Load with timeout — screen should never hang forever
+      final results = await Future.wait([
+        ReferralService.getOrCreateCode(),
+        ReferralService.getReferralCount(),
+        ReferralService.getRewardDays(),
+        ReferralService.wasReferred(),
+        ReferralService.getLeaderboard(),
+      ]).timeout(const Duration(seconds: 10));
 
-    setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _myCode = results[0] as String;
+          _referralCount = results[1] as int;
+          _rewardDays = results[2] as int;
+          _wasReferred = results[3] as bool;
+          _leaderboard = results[4] as List<Map<String, dynamic>>;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      // On timeout or error, still show the screen with defaults
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _copyCode() {

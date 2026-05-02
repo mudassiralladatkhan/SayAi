@@ -126,18 +126,23 @@ class ReferralService {
   // ─── Get the referral leaderboard (top 5 referrers) ────────────────────────
   static Future<List<Map<String, dynamic>>> getLeaderboard() async {
     try {
+      // Fetch all users who have referred at least 1 person
+      // Note: no orderBy to avoid requiring a Firestore index
       final query = await _db
           .collection('users')
           .where('referral_count', isGreaterThan: 0)
-          .orderBy('referral_count', descending: true)
-          .limit(5)
+          .limit(20)
           .get();
 
-      return query.docs.map((doc) => {
+      final results = query.docs.map((doc) => {
         'name': doc.data()['user_name'] ?? 'Anonymous',
         'count': doc.data()['referral_count'] ?? 0,
         'isMe': doc.id == _uid,
       }).toList();
+
+      // Sort client-side instead (no index required)
+      results.sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
+      return results.take(5).toList();
     } catch (_) {
       return [];
     }

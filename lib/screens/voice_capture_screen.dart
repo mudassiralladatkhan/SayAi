@@ -11,6 +11,7 @@ import '../services/notification_service.dart';
 import '../models/user_model.dart';
 import '../models/task_model.dart';
 import '../providers/task_provider.dart';
+import '../services/user_service.dart';
 
 class VoiceCaptureScreen extends StatefulWidget {
   const VoiceCaptureScreen({Key? key}) : super(key: key);
@@ -114,14 +115,22 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
     );
     
     final yogReply = responseData['response'] ?? 'Sorry yaar, kuch gadbad ho gayi.';
+    final detectedMood = responseData['mood'] ?? 'neutral';
 
     // Store this exchange in history for AI memory
     _conversationHistory.add({'role': 'user', 'content': _recognizedText});
     _conversationHistory.add({'role': 'assistant', 'content': yogReply});
-    // Keep history to last 20 messages (10 exchanges) to avoid token overflow
     if (_conversationHistory.length > 20) {
       _conversationHistory.removeRange(0, 2);
     }
+
+    // Persist mood + conversation to Firestore (background, non-blocking)
+    UserService.saveMood(detectedMood);
+    UserService.saveConversation(
+      userMessage: _recognizedText,
+      yogReply: yogReply,
+      mood: detectedMood,
+    );
 
     // Extract and persist tasks from AI response
     final extractedRaw = responseData['extracted_tasks'];

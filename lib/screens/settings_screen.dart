@@ -66,6 +66,8 @@ class _PersonalizeScreenState extends State<PersonalizeScreen> {
       name: name,
       tone: _selectedTone,
       language: _selectedLanguage,
+      tuYaAap: _tuYaAap,
+      shayariEnabled: _shayariEnabled,
     );
 
     if (mounted) {
@@ -328,6 +330,9 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       // Schedule actual OS background alarm
       await NotificationService().scheduleDailyAlarm(picked);
       
+      // Sync alarm time to Firestore
+      UserService.saveAlarmSettings(hour: picked.hour, minute: picked.minute);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Morning alarm set to ${picked.format(context)}')),
       );
@@ -386,6 +391,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                     onChanged: (val) async {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setString('custom_alarm_message', val.trim());
+                      UserService.saveAlarmSettings(customMessage: val.trim());
                     },
                   ),
                   const SizedBox(height: 4),

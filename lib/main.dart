@@ -57,6 +57,7 @@ void main() async {
   // If user is already logged in, restore their data from Firestore
   if (currentUser != null) {
     await UserService.loadProfileIntoPrefs();
+    await UserService.checkAndUpdateStreak(); // Auto-increment daily streak
   }
 
   // Check onboarding status (may have been updated by Firestore load above)

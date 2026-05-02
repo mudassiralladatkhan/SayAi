@@ -7,6 +7,7 @@ import '../widgets/bottom_nav.dart';
 import '../widgets/yog_avatar.dart';
 import '../services/stt_service.dart';
 import '../services/tts_service.dart';
+import '../services/user_service.dart';
 
 class VoiceDiaryEntry {
   final String id;
@@ -120,7 +121,14 @@ class _VoiceDiaryScreenState extends State<VoiceDiaryScreen> {
           _entries.insert(0, newEntry);
           _liveText = '';
         });
-        await _saveEntries(); // 💾 persist
+        await _saveEntries(); // 💾 persist locally
+        // Sync to Firestore
+        UserService.saveDiaryEntry(
+          id: newEntry.id,
+          transcript: newEntry.transcript,
+          mood: newEntry.mood,
+          timestamp: newEntry.timestamp,
+        );
       }
       setState(() { _isRecording = false; });
     } else {

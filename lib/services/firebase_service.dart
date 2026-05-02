@@ -3,19 +3,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../models/task_model.dart';
 
+/// Legacy service — core Firestore operations now handled by UserService.
+/// Kept for any remaining usage in the codebase.
 class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Placeholder logic for sign in (in a real app, use Google/Phone auth)
   Future<UserCredential> signInAnonymously() async {
     return await _auth.signInAnonymously();
   }
 
-  // Get current user ID
   String? get currentUserId => _auth.currentUser?.uid;
 
-  // User details
   Stream<UserModel?> getUserStream(String userId) {
     return _firestore.collection('users').doc(userId).snapshots().map((doc) {
       if (doc.exists) {
@@ -29,7 +28,6 @@ class FirebaseService {
     await _firestore.collection('users').doc(user.id).set(user.toMap(), SetOptions(merge: true));
   }
 
-  // Tasks
   Stream<List<TaskModel>> getTasks(String userId, String dateStr) {
     return _firestore
         .collection('users')
@@ -38,7 +36,7 @@ class FirebaseService {
         .where('date', isEqualTo: dateStr)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => TaskModel.fromMap(doc.data(), doc.id)).toList();
+      return snapshot.docs.map((doc) => TaskModel.fromJson(doc.data())).toList();
     });
   }
 
@@ -48,7 +46,7 @@ class FirebaseService {
         .doc(userId)
         .collection('tasks')
         .doc(task.id)
-        .set(task.toMap());
+        .set(task.toJson());
   }
 
   Future<void> updateTask(String userId, TaskModel task) async {
@@ -57,7 +55,7 @@ class FirebaseService {
         .doc(userId)
         .collection('tasks')
         .doc(task.id)
-        .update(task.toMap());
+        .update(task.toJson());
   }
 
   Future<void> deleteTask(String userId, String taskId) async {
@@ -69,7 +67,6 @@ class FirebaseService {
         .delete();
   }
 
-  // Diary entries / STT usage
   Future<void> updateUsage(String userId, String type, int value) async {
     await _firestore.collection('users').doc(userId).collection('usage').doc('current').set({
       type: FieldValue.increment(value),

@@ -15,6 +15,7 @@ class GptService {
     required String message,
     required UserModel user,
     required String currentTasks,
+    List<Map<String, String>> conversationHistory = const [],
   }) async {
     String tonePrompt = '';
     switch (user.tone) {
@@ -44,7 +45,7 @@ class GptService {
       case 'English':
         languageInstruction = 'STRICTLY reply in pure English. Do NOT use Hindi or Hinglish.';
         break;
-      default: // Hinglish
+      default:
         languageInstruction = 'Reply in Hinglish — a natural mix of Hindi and English, as Indian friends speak.';
     }
 
@@ -58,15 +59,15 @@ User's current streak: ${user.streak} days.
 Today's scheduled tasks: $currentTasks
 
 RULES:
-1. Always reply in Hinglish (mix Hindi + English naturally).
-2. Keep your response SHORT and conversational (2-3 sentences max).
-3. If the user mentions scheduling something (e.g. "gym at 6", "meeting tomorrow 3pm"), extract it as a task.
-4. If the user's mood is very strong (happy/sad/stressed), include a short 2-line Hinglish shayari.
+1. Keep your response SHORT and conversational (2-3 sentences max).
+2. If the user mentions scheduling something (e.g. "gym at 6", "meeting tomorrow 3pm"), extract it as a task.
+3. If the user's mood is very strong (happy/sad/stressed), include a short 2-line Hinglish shayari.
+4. Remember the conversation history provided and refer to it naturally.
 5. OUTPUT ONLY VALID RAW JSON — no markdown, no code blocks, no extra text before or after.
 
 JSON format:
 {
-  "response": "YOG's reply in Hinglish",
+  "response": "YOG's reply",
   "mood": "happy|sad|neutral|motivated|stressed|excited",
   "includeShayari": true|false,
   "shayari": "2 line shayari if needed, else empty string",
@@ -75,6 +76,13 @@ JSON format:
   ]
 }
 ''';
+
+    // Build messages array: system + conversation history + current message
+    final List<Map<String, String>> messages = [
+      {'role': 'system', 'content': systemPrompt},
+      ...conversationHistory.take(10), // Keep last 10 exchanges for context
+      {'role': 'user', 'content': message},
+    ];
 
     try {
       final response = await http.post(
@@ -85,10 +93,7 @@ JSON format:
         },
         body: jsonEncode({
           'model': _model,
-          'messages': [
-            {'role': 'system', 'content': systemPrompt},
-            {'role': 'user', 'content': message},
-          ],
+          'messages': messages,
           'temperature': 0.7,
           'max_tokens': 512,
         }),

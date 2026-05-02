@@ -31,6 +31,7 @@ class _AuthScreenState extends State<AuthScreen> {
   // ─── Navigate after successful auth ───────────────────────────────────────
   Future<void> _afterAuth() async {
     await UserService.loadProfileIntoPrefs();
+    await UserService.checkAndUpdateStreak();
     final prefs = await SharedPreferences.getInstance();
     final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
     if (!mounted) return;

@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../theme/app_theme.dart';
 import '../widgets/yog_avatar.dart';
 import '../providers/task_provider.dart';
+import '../services/user_service.dart';
 import 'voice_diary_screen.dart';
 import 'voice_capture_screen.dart';
 
@@ -54,6 +55,14 @@ class _NightCheckinScreenState extends State<NightCheckinScreen> {
     List<dynamic> jsonList = raw != null ? jsonDecode(raw) : [];
     jsonList.insert(0, newEntry.toJson());
     await prefs.setString('diary_entries', jsonEncode(jsonList));
+
+    // Sync to Firestore
+    UserService.saveDiaryEntry(
+      id: newEntry.id,
+      transcript: newEntry.transcript,
+      mood: newEntry.mood,
+      timestamp: newEntry.timestamp,
+    );
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

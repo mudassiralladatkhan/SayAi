@@ -27,6 +27,9 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
   String _recognizedText = '';
   String _yogResponse = '';
 
+  // Conversation history for AI memory (within this session)
+  final List<Map<String, String>> _conversationHistory = [];
+
   final SttService _sttService = SttService();
   final GptService _gptService = GptService();
   final TtsService _ttsService = TtsService();
@@ -107,9 +110,18 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
       message: _recognizedText,
       user: user,
       currentTasks: taskSummary,
+      conversationHistory: _conversationHistory,
     );
     
     final yogReply = responseData['response'] ?? 'Sorry yaar, kuch gadbad ho gayi.';
+
+    // Store this exchange in history for AI memory
+    _conversationHistory.add({'role': 'user', 'content': _recognizedText});
+    _conversationHistory.add({'role': 'assistant', 'content': yogReply});
+    // Keep history to last 20 messages (10 exchanges) to avoid token overflow
+    if (_conversationHistory.length > 20) {
+      _conversationHistory.removeRange(0, 2);
+    }
 
     // Extract and persist tasks from AI response
     final extractedRaw = responseData['extracted_tasks'];

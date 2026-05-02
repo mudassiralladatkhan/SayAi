@@ -837,13 +837,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
           TextButton(
             onPressed: () async {
-              // Clear TaskProvider (updates UI immediately)
+              // Clear TaskProvider (updates UI + Firestore)
               if (mounted) {
                 await context.read<TaskProvider>().clearAll();
               }
-              // Clear diary entries from SharedPreferences
+              // Clear diary entries from SharedPreferences + Firestore
               final prefs = await SharedPreferences.getInstance();
               await prefs.remove('diary_entries');
+              UserService.clearAllDiary();
               if (mounted) {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(

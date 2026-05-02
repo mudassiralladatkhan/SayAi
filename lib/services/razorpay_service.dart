@@ -1,7 +1,11 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class RazorpayService {
   final Razorpay _razorpay = Razorpay();
+
+  // Load key from .env — replace rzp_test_YOUR_KEY in .env with your real key
+  String get _key => dotenv.env['RAZORPAY_KEY'] ?? 'rzp_test_YOUR_KEY';
 
   void initialize(
     Function(PaymentSuccessResponse) handlePaymentSuccess,
@@ -14,30 +18,28 @@ class RazorpayService {
   }
 
   void openCheckout({
-    required double amount, // In INR, not paise here, we multiply internally
+    required double amount,
     required String name,
     required String description,
     required String phone,
     required String email,
   }) {
     var options = {
-      'key': 'rzp_test_YOUR_KEY', // Replace with your real key
-      'amount': (amount * 100).toInt(), // amount in paise
+      'key': _key,
+      'amount': (amount * 100).toInt(), // in paise
       'name': name,
       'description': description,
       'prefill': {
         'contact': phone,
         'email': email,
       },
-      'theme': {
-        'color': '#6C63FF'
-      }
+      'theme': {'color': '#6C63FF'},
     };
 
     try {
       _razorpay.open(options);
     } catch (e) {
-      print('Error: \$e');
+      print('Razorpay Error: $e');
     }
   }
 

@@ -262,13 +262,12 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         const SizedBox(height: 16),
                         // Share / Copy buttons
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildActionBtn(Icons.share_rounded, 'Share', AppTheme.primaryPurple, _shareLink),
+                            Expanded(child: _buildActionBtn(Icons.share_rounded, 'Share', AppTheme.primaryPurple, _shareLink)),
                             const SizedBox(width: 10),
-                            _buildActionBtn(Icons.link_rounded, 'Copy Link', Colors.blue, _copyLink),
+                            Expanded(child: _buildActionBtn(Icons.link_rounded, 'Copy Link', Colors.blue, _copyLink)),
                             const SizedBox(width: 10),
-                            _buildActionBtn(Icons.copy_rounded, 'Copy Code', Colors.orange, _copyCode),
+                            Expanded(child: _buildActionBtn(Icons.copy_rounded, 'Copy Code', Colors.orange, _copyCode)),
                           ],
                         ),
                       ],
@@ -447,7 +446,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.15),
           borderRadius: BorderRadius.circular(14),

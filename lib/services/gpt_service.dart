@@ -9,7 +9,7 @@ class GptService {
   // Groq API — fast, reliable, free tier
   String get _apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
   final String _endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-  final String _model = 'llama3-70b-8192';
+  final String _model = 'llama-3.3-70b-versatile';
 
   Future<Map<String, dynamic>> getResponse({
     required String message,

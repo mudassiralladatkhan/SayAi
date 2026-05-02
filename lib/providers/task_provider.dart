@@ -103,4 +103,10 @@ class TaskProvider extends ChangeNotifier {
     // Clear all tasks in Firestore
     UserService.clearAllTasks();
   }
+
+  /// Call this on logout — clears in-memory tasks only (does NOT delete from Firestore).
+  void clearForLogout() {
+    _tasks.clear();
+    notifyListeners();
+  }
 }

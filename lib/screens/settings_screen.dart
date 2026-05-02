@@ -810,11 +810,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              // Sign out from Firebase
+              // Clear in-memory task list immediately
+              if (mounted) context.read<TaskProvider>().clearForLogout();
+              // Sign out from Firebase Auth
               await FirebaseAuth.instance.signOut();
-              // Clear onboarding flag so next login goes through onboarding
+              // Clear ALL local cached data — next user gets a clean slate
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('has_onboarded', false);
+              await prefs.clear();
               if (mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'addon_screen.dart';
+import 'referral_screen.dart';
 
 class PricingScreen extends StatelessWidget {
   const PricingScreen({Key? key}) : super(key: key);
@@ -116,17 +117,22 @@ class PricingScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Referral Banner
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppTheme.primaryPurple, Color(0xFF2D1B69)]),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: const [
-                  Expanded(child: Text('🎁 Dosto ko refer karo — 7 din free Pro pao!', style: TextStyle(color: AppTheme.textWhite, fontSize: 14))),
-                  Icon(Icons.chevron_right, color: AppTheme.textWhite),
-                ],
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
+              },
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [AppTheme.primaryPurple, Color(0xFF2D1B69)]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: const [
+                    Expanded(child: Text('🎁 Dosto ko refer karo — 7 din free Pro pao!', style: TextStyle(color: AppTheme.textWhite, fontSize: 14))),
+                    Icon(Icons.chevron_right, color: AppTheme.textWhite),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

@@ -6,7 +6,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/user_model.dart';
 
 class GptService {
-  // Groq API — fast, reliable, free tier
   String get _apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
   final String _endpoint = 'https://api.groq.com/openai/v1/chat/completions';
   final String _model = 'llama-3.3-70b-versatile';
@@ -20,67 +19,57 @@ class GptService {
     String tonePrompt = '';
     switch (user.tone) {
       case 'yaar':
-        tonePrompt = 'You are a casual, friendly, chill companion. Use "yaar", "bhai", "chal". Be motivating but relaxed.';
+        tonePrompt = 'casual friendly companion, use yaar bhai chal';
         break;
       case 'coach':
-        tonePrompt = 'You are a strict, pushing, intense motivational coach. Use "Come on!", "No excuses!". Be high energy.';
+        tonePrompt = 'strict intense motivational coach, use Come on No excuses';
         break;
       case 'friend':
-        tonePrompt = 'You are a fun, jokey, very casual best friend. Use lots of humor and heavy Hinglish.';
+        tonePrompt = 'fun jokey casual best friend with heavy Hinglish';
         break;
       case 'mentor':
-        tonePrompt = 'You are a wise, calm, thoughtful mentor. Ask deep questions, be philosophical.';
+        tonePrompt = 'wise calm thoughtful mentor, ask deep questions';
         break;
       default:
-        tonePrompt = 'You are a casual, friendly companion. Use "yaar", "bhai". Be motivating.';
+        tonePrompt = 'casual friendly companion, use yaar bhai';
     }
 
-    String respect = user.tuYaAap ? 'Use casual "tu" or "tum".' : 'Use formal "aap".';
+    final respect = user.tuYaAap ? 'casual tu/tum' : 'formal aap';
 
-    String languageInstruction = '';
+    String lang = '';
     switch (user.language) {
       case 'Hindi':
-        languageInstruction = 'STRICTLY reply in pure Hindi (Devanagari script). Do NOT use English words.';
+        lang = 'pure Hindi Devanagari script';
         break;
       case 'English':
-        languageInstruction = 'STRICTLY reply in pure English. Do NOT use Hindi or Hinglish.';
+        lang = 'pure English only';
         break;
       default:
-        languageInstruction = 'Reply in Hinglish — a natural mix of Hindi and English, as Indian friends speak.';
+        lang = 'Hinglish mix of Hindi and English';
     }
 
     final systemPrompt = '''
-You are YOG (Your Own Guide), a voice-first AI life assistant for an Indian user named ${user.naam}.
-LANGUAGE RULE (MANDATORY): $languageInstruction
-Tone: $tonePrompt
-Respect level: $respect
-User's current mood: ${user.lastMood}.
-User's current streak: ${user.streak} days.
-Today's scheduled tasks: $currentTasks
+You are YOG, a voice AI assistant for Indian user named ${user.naam}.
+Language: $lang. Tone: $tonePrompt. Address user with: $respect.
+User mood: ${user.lastMood}. Streak: ${user.streak} days.
+Today tasks: $currentTasks
 
-RULES:
-1. Keep your response SHORT and conversational (2-3 sentences max).
-2. If the user mentions scheduling something (e.g. "gym at 6", "meeting tomorrow 3pm"), extract it as a task.
-3. If the user's mood is very strong (happy/sad/stressed), include a short 2-line Hinglish shayari.
-4. Remember the conversation history provided and refer to it naturally.
-5. OUTPUT ONLY VALID RAW JSON — no markdown, no code blocks, no extra text before or after.
+IMPORTANT: Respond ONLY with a JSON object. No markdown. No extra text.
+Example format:
+{"response":"Haan yaar, kya haal hai!","mood":"happy","includeShayari":false,"shayari":"","extracted_tasks":[]}
 
-JSON format:
-{
-  "response": "YOG's reply",
-  "mood": "happy|sad|neutral|motivated|stressed|excited",
-  "includeShayari": true|false,
-  "shayari": "2 line shayari if needed, else empty string",
-  "extracted_tasks": [
-    {"title": "Task name", "time": "5:00 PM", "duration": "30 min", "category": "Work|Health|Learning|Personal|General"}
-  ]
-}
+Rules:
+- response: your short reply (2-3 sentences)
+- mood: one of happy/sad/neutral/motivated/stressed/excited
+- includeShayari: true only if mood is very strong
+- shayari: 2-line Hindi shayari, else empty string
+- extracted_tasks: list of tasks if user mentions scheduling, else empty list
+- Each task: {"title":"...","time":"HH:MM AM/PM","duration":"X min","category":"Work/Health/Learning/Personal/General"}
 ''';
 
-    // Build messages array: system + conversation history + current message
     final List<Map<String, String>> messages = [
       {'role': 'system', 'content': systemPrompt},
-      ...conversationHistory.take(10), // Keep last 10 exchanges for context
+      ...conversationHistory.take(10),
       {'role': 'user', 'content': message},
     ];
 
@@ -96,61 +85,80 @@ JSON format:
           'messages': messages,
           'temperature': 0.7,
           'max_tokens': 512,
+          'response_format': {'type': 'json_object'},
         }),
       ).timeout(const Duration(seconds: 20));
 
+      print('🌐 Groq Status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        String content = data['choices'][0]['message']['content'];
+        final String content = data['choices'][0]['message']['content'] as String;
+        print('🤖 Groq content: $content');
 
-        // Strip any accidental markdown wrapping
-        content = content.replaceAll('```json', '').replaceAll('```', '').trim();
-
-        // Extract only the JSON object
-        int start = content.indexOf('{');
-        int end = content.lastIndexOf('}');
-        if (start != -1 && end != -1 && end > start) {
-          content = content.substring(start, end + 1);
+        // Parse the JSON response
+        try {
+          final decoded = jsonDecode(content);
+          if (decoded is Map<String, dynamic> && decoded.containsKey('response')) {
+            return decoded;
+          }
+        } catch (parseErr) {
+          print('⚠️ JSON parse error: $parseErr');
         }
 
-        final decoded = jsonDecode(content);
-        if (decoded is Map<String, dynamic>) {
-          return decoded;
+        // Fallback: try to extract JSON block manually
+        final start = content.indexOf('{');
+        final end = content.lastIndexOf('}');
+        if (start != -1 && end > start) {
+          try {
+            final decoded = jsonDecode(content.substring(start, end + 1));
+            if (decoded is Map<String, dynamic>) return decoded;
+          } catch (_) {}
         }
-        throw Exception('Invalid JSON format from Groq');
+
+        // Last resort: return raw text as reply so user isn't stuck
+        return {
+          'response': content.trim().isNotEmpty ? content.trim() : 'Haan yaar, bol kya hua?',
+          'mood': 'neutral',
+          'includeShayari': false,
+          'shayari': '',
+          'extracted_tasks': [],
+        };
+
       } else {
-        print('Groq API Error: ${response.statusCode} - ${response.body}');
+        print('❌ Groq API Error ${response.statusCode}: ${response.body}');
         return _fallbackResponse();
       }
-    } on SocketException catch (_) {
+
+    } on SocketException {
       return {
-        "response": "Internet connection nahi mil raha yaar. Wi-Fi check kar lo ek baar! 🌐",
-        "mood": "sad",
-        "includeShayari": false,
-        "shayari": "",
-        "extracted_tasks": [],
+        'response': 'Internet nahi hai yaar! Wi-Fi check karo. 🌐',
+        'mood': 'sad',
+        'includeShayari': false,
+        'shayari': '',
+        'extracted_tasks': [],
       };
-    } on TimeoutException catch (_) {
+    } on TimeoutException {
       return {
-        "response": "Internet bahut slow hai yaar. YOG wait kar karke thak gaya! ⏳",
-        "mood": "stressed",
-        "includeShayari": false,
-        "shayari": "",
-        "extracted_tasks": [],
+        'response': 'Response aane mein time lag raha hai. Thodi der baad try karo! ⏳',
+        'mood': 'neutral',
+        'includeShayari': false,
+        'shayari': '',
+        'extracted_tasks': [],
       };
     } catch (e) {
-      print('Groq API Exception: $e');
+      print('❌ Groq Exception: $e');
       return _fallbackResponse();
     }
   }
 
   Map<String, dynamic> _fallbackResponse() {
     return {
-      "response": "Yaar, abhi network thoda slow hai! Thodi der baad try karo. Tab tak apna kaam karte raho! 💪",
-      "mood": "neutral",
-      "includeShayari": false,
-      "shayari": "",
-      "extracted_tasks": [],
+      'response': 'Kuch technical gadbad hai yaar. App restart karo ek baar! 🔄',
+      'mood': 'neutral',
+      'includeShayari': false,
+      'shayari': '',
+      'extracted_tasks': [],
     };
   }
 }

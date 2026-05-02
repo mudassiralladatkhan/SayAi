@@ -447,18 +447,31 @@ class _ReferralScreenState extends State<ReferralScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.4)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withOpacity(0.7), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.45),
+              blurRadius: 14,
+              spreadRadius: 1,
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 5),
+            Text(label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                )),
           ],
         ),
       ),

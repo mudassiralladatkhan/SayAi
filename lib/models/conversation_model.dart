@@ -19,7 +19,9 @@ class ConversationModel {
     return ConversationModel(
       id: id,
       messages: data['messages'] ?? [],
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: data['timestamp'] != null
+          ? (data['timestamp'] as Timestamp).toDate()
+          : DateTime.now(),
       mood: data['mood'] ?? 'neutral',
       summary: data['summary'] ?? '',
     );

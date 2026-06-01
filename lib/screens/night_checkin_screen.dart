@@ -40,7 +40,7 @@ class _NightCheckinScreenState extends State<NightCheckinScreen> {
   Future<void> _saveCheckin() async {
     final prefs = await SharedPreferences.getInstance();
     
-    final moodStr = _selectedMood >= 0 ? moods[_selectedMood]['label'] : 'neutral';
+    final moodStr = _selectedMood >= 0 ? (moods[_selectedMood]['label'] ?? 'neutral') : 'neutral';
     final text = _textController.text.trim();
     final entryText = text.isNotEmpty ? text : "Completed my night check-in.";
 
@@ -48,13 +48,12 @@ class _NightCheckinScreenState extends State<NightCheckinScreen> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       transcript: "Night Check-in: $entryText",
       timestamp: DateTime.now(),
-      mood: moodStr!.toLowerCase(),
+      mood: moodStr.toLowerCase(),
     );
 
-    final raw = prefs.getString('diary_entries');
-    List<dynamic> jsonList = raw != null ? jsonDecode(raw) : [];
-    jsonList.insert(0, newEntry.toJson());
-    await prefs.setString('diary_entries', jsonEncode(jsonList));
+    final raw = prefs.getStringList('diary_entries') ?? [];
+    raw.insert(0, jsonEncode(newEntry.toJson()));
+    await prefs.setStringList('diary_entries', raw);
 
     // Sync to Firestore
     UserService.saveDiaryEntry(

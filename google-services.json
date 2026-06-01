@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "972075649477",
+    "project_id": "sayai-46c19",
+    "storage_bucket": "sayai-46c19.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:972075649477:android:eb1ba3bb83c42a6499a3ac",
+        "android_client_info": {
+          "package_name": "com.example.saynote_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "972075649477-mj1183b0e0re0jrq7r4gqbltaucedicb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.saynote_ai",
+            "certificate_hash": "3aec7d283b37dfa43883466914029f82931829d7"
+          }
+        },
+        {
+          "client_id": "972075649477-poajo18vdkumo4s83t7t8njq4cpj84ph.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWJLWMObVHlVqkWEjPoOYCbZWLT4fMDis"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "972075649477-poajo18vdkumo4s83t7t8njq4cpj84ph.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

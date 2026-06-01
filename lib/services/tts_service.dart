@@ -40,17 +40,38 @@ class TtsService {
     }
   }
 
-  Future<void> speak(String text) async {
+  Future<void> speak(String text, {String language = 'Hinglish'}) async {
     if (text.trim().isEmpty) return;
     if (!_isReady) {
       await _initTts();
     }
+
+    // Set language based on user preference
+    if (language == 'English') {
+      await _flutterTts.setLanguage('en-IN');
+    } else if (language == 'Hindi') {
+      await _flutterTts.setLanguage('hi-IN');
+    } else {
+      // Hinglish - use hi-IN for Hindi accent on Roman text
+      await _flutterTts.setLanguage('hi-IN');
+    }
+
+    final cleanText = _removeEmojis(text);
+    if (cleanText.trim().isEmpty) return;
     try {
-      await _flutterTts.stop(); // Stop any ongoing speech first
-      await _flutterTts.speak(text);
+      await _flutterTts.stop();
+      await _flutterTts.speak(cleanText);
     } catch (e) {
       // Silently fail — TTS is non-critical
     }
+  }
+
+  String _removeEmojis(String text) {
+    final emojiRegex = RegExp(
+      r'[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{20E3}]|[\u{E0020}-\u{E007F}]',
+      unicode: true,
+    );
+    return text.replaceAll(emojiRegex, '').replaceAll(RegExp(r'\s{2,}'), ' ').trim();
   }
 
   Future<void> stop() async {

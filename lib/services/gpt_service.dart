@@ -17,54 +17,82 @@ class GptService {
     List<Map<String, String>> conversationHistory = const [],
   }) async {
     String tonePrompt = '';
-    switch (user.tone) {
-      case 'yaar':
-        tonePrompt = 'casual friendly companion, use yaar bhai chal';
-        break;
-      case 'coach':
-        tonePrompt = 'strict intense motivational coach, use Come on No excuses';
-        break;
-      case 'friend':
-        tonePrompt = 'fun jokey casual best friend with heavy Hinglish';
-        break;
-      case 'mentor':
-        tonePrompt = 'wise calm thoughtful mentor, ask deep questions';
-        break;
-      default:
-        tonePrompt = 'casual friendly companion, use yaar bhai';
+    if (user.language == 'English') {
+      switch (user.tone) {
+        case 'yaar':
+          tonePrompt = 'casual friendly companion, like a close buddy. Use words like dude, bro, mate.';
+          break;
+        case 'coach':
+          tonePrompt = 'strict intense motivational coach. Push hard, no excuses.';
+          break;
+        case 'friend':
+          tonePrompt = 'fun jokey casual best friend. Crack jokes, tease lightly.';
+          break;
+        case 'mentor':
+          tonePrompt = 'wise calm thoughtful mentor. Ask deep questions, give perspective.';
+          break;
+        default:
+          tonePrompt = 'casual friendly companion.';
+      }
+    } else {
+      switch (user.tone) {
+        case 'yaar':
+          tonePrompt = 'casual friendly companion, use yaar bhai chal type language.';
+          break;
+        case 'coach':
+          tonePrompt = 'strict intense motivational coach, push hard, no excuses.';
+          break;
+        case 'friend':
+          tonePrompt = 'fun jokey casual best friend, crack jokes, tease.';
+          break;
+        case 'mentor':
+          tonePrompt = 'wise calm thoughtful mentor, ask deep questions.';
+          break;
+        default:
+          tonePrompt = 'casual friendly companion.';
+      }
     }
 
-    final respect = user.tuYaAap ? 'casual tu/tum' : 'formal aap';
+    final respect = (user.language == 'English') ? '' : (user.tuYaAap ? 'Use casual tu/tum to address the user.' : 'Use formal aap to address the user.');
 
     String lang = '';
     switch (user.language) {
       case 'Hindi':
-        lang = 'pure Hindi Devanagari script';
+        lang = 'Respond in Hindi using Devanagari script (like: हाय, क्या हाल है?). Every word in Devanagari.';
         break;
       case 'English':
-        lang = 'pure English only';
+        lang = 'Respond in English only. No Hindi words. Example: "Hey, how are you? How is your day going?"';
         break;
       default:
-        lang = 'Hinglish mix of Hindi and English';
+        lang = '''Respond in Hinglish using ONLY Roman/English alphabet.
+CORRECT examples: "Arey yaar, kya haal hai?", "Tera din kaisa gaya?", "Chal bata kya scene hai"
+WRONG (NEVER DO THIS): "अरे यार, क्या हाल है?" - this is Devanagari, NOT allowed for Hinglish.
+Hinglish = Hindi words spelled in English letters. NEVER use Devanagari script (अ आ इ ई उ ऊ etc). Use ONLY a-z English letters.''';
     }
 
     final systemPrompt = '''
-You are YOG, a voice AI assistant for Indian user named ${user.naam}.
-Language: $lang. Tone: $tonePrompt. Address user with: $respect.
-User mood: ${user.lastMood}. Streak: ${user.streak} days.
-Today tasks: $currentTasks
+You are YOG, a personal voice AI assistant for ${user.naam}.
 
-IMPORTANT: Respond ONLY with a JSON object. No markdown. No extra text.
-Example format:
-{"response":"Haan yaar, kya haal hai!","mood":"happy","includeShayari":false,"shayari":"","extracted_tasks":[]}
+LANGUAGE RULE (STRICTLY FOLLOW):
+$lang
 
-Rules:
-- response: your short reply (2-3 sentences)
-- mood: one of happy/sad/neutral/motivated/stressed/excited
-- includeShayari: true only if mood is very strong
-- shayari: 2-line Hindi shayari, else empty string
-- extracted_tasks: list of tasks if user mentions scheduling, else empty list
-- Each task: {"title":"...","time":"HH:MM AM/PM","duration":"X min","category":"Work/Health/Learning/Personal/General"}
+TONE: $tonePrompt
+ADDRESS: $respect
+
+CRITICAL RULES:
+- Give ONLY one response in the EXACT language specified above. Do NOT give translations or responses in multiple languages.
+- Respond naturally to what the user actually said. Do NOT give generic greetings unless the user greeted you first.
+- Keep responses short (1-3 sentences), natural, and conversational.
+- Detect the user's mood from their message.
+- If user mentions tasks/schedule, extract them.
+
+User context: Streak ${user.streak} days. Tasks: $currentTasks
+
+Respond ONLY with a JSON object. No markdown. No extra text.
+{"response":"your reply here","mood":"detected_mood","includeShayari":false,"shayari":"","extracted_tasks":[]}
+
+mood must be one of: happy/sad/neutral/motivated/stressed/excited/angry/anxious/calm/tired/confused
+extracted_tasks format: [{"title":"...","time":"HH:MM AM/PM","duration":"X min","category":"Work/Health/Learning/Personal/General"}]
 ''';
 
     final List<Map<String, String>> messages = [

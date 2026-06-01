@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/yog_avatar.dart';
+import '../services/payment_service.dart';
 
 class AddonScreen extends StatefulWidget {
   const AddonScreen({Key? key}) : super(key: key);
@@ -13,11 +14,56 @@ class _AddonScreenState extends State<AddonScreen> {
   double sttMinutes = 0;
   double ttsMinutes = 0;
   double tokens = 0;
+  final PaymentService _paymentService = PaymentService();
 
   double get sttPrice => sttMinutes * 1.0;
   double get ttsPrice => ttsMinutes * 0.5;
   double get tokenPrice => (tokens / 1500) * 1.0;
   double get totalPrice => sttPrice + ttsPrice + tokenPrice;
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentService.init(
+      onPaymentSuccess: (paymentId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Add-on pack purchased! 🎉'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      },
+      onPaymentError: (message) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: $message'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _paymentService.dispose();
+    super.dispose();
+  }
+
+  void _purchaseAddon() {
+    final amountInPaise = (totalPrice * 100).toInt();
+    _paymentService.openCheckout(
+      planName: 'Add-on Pack',
+      amountInPaise: amountInPaise,
+      userName: 'User',
+      email: 'user@saynoteai.com',
+      phone: '9999999999',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +196,7 @@ class _AddonScreenState extends State<AddonScreen> {
 
             // Purchase Button
             ElevatedButton(
-              onPressed: isValid ? () {} : null,
+              onPressed: isValid ? _purchaseAddon : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isValid ? AppTheme.primaryPurple : const Color(0xFF2A2A2A),
               ),

@@ -14,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   await dotenv.load(fileName: ".env");
 
@@ -25,16 +25,7 @@ void main() async {
     debugPrint('Firebase init failed: $e');
   }
 
-  // Initialize notification service safely — don't crash if it fails
-  try {
-    final notificationService = NotificationService();
-    await notificationService.initialize();
-    await notificationService.requestPermissions();
-  } catch (e) {
-    debugPrint('Notification init failed (non-critical): $e');
-  }
-
-  // Get SharedPreferences — will be populated by Firestore if user is logged in
+  // Get SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -52,15 +43,12 @@ void main() async {
     );
   };
 
-  final currentUser = FirebaseAuth.instance.currentUser;
-
-  // If user is already logged in, restore their data from Firestore
-  if (currentUser != null) {
-    await UserService.loadProfileIntoPrefs();
-    await UserService.checkAndUpdateStreak(); // Auto-increment daily streak
+  User? currentUser;
+  try {
+    currentUser = FirebaseAuth.instance.currentUser;
+  } catch (e) {
+    debugPrint('Auth initialization failed: $e');
   }
-
-  // Check onboarding status (may have been updated by Firestore load above)
   final bool hasOnboarded = prefs.getBool('has_onboarded') ?? false;
 
   Widget initialScreen;
@@ -80,6 +68,17 @@ void main() async {
       child: SayNoteApp(initialScreen: initialScreen),
     ),
   );
+
+  // Deferred non-blocking init after UI is shown
+  if (currentUser != null) {
+    UserService.loadProfileIntoPrefs();
+    UserService.checkAndUpdateStreak();
+  }
+  try {
+    final notificationService = NotificationService();
+    notificationService.initialize();
+    notificationService.requestPermissions();
+  } catch (_) {}
 }
 
 class SayNoteApp extends StatelessWidget {

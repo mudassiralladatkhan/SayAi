@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,13 +21,15 @@ class VoiceCaptureScreen extends StatefulWidget {
   State<VoiceCaptureScreen> createState() => _VoiceCaptureScreenState();
 }
 
-class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
+class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> with SingleTickerProviderStateMixin {
   int _seconds = 0;
   Timer? _timer;
   bool _isRecording = false;
   bool _isProcessing = false;
   String _recognizedText = '';
   String _yogResponse = '';
+  String _currentMood = 'neutral';
+  AnimationController? _marqueeController;
 
   // Conversation history for AI memory (within this session)
   final List<Map<String, String>> _conversationHistory = [];
@@ -38,10 +41,19 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
   @override
   void initState() {
     super.initState();
+    _marqueeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
     _initVoice();
   }
 
   Future<void> _initVoice() async {
+    // Load last known mood
+    final prefs = await SharedPreferences.getInstance();
+    final savedMood = prefs.getString('last_mood') ?? 'neutral';
+    if (mounted) setState(() { _currentMood = savedMood; });
+
     bool initialized = await _sttService.initialize();
     if (initialized) {
       _startListening();
@@ -74,10 +86,26 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
       _timer?.cancel();
     });
     await _sttService.stopListening();
-    
-    // Fallback if no text
+
+    // If no input, YOG initiates the conversation
     if (_recognizedText.trim().isEmpty) {
-      _recognizedText = "Hi YOG, kaisa hai bhai?";
+      const greetings = [
+        'Bol yaar, kya chal raha hai? Main sun raha hoon!',
+        'Kya haal hai bhai? Bata kya help chahiye?',
+        'Arey yaar, kuch bolo na! Main ready hoon.',
+        'Sun raha hoon boss, bol kya scene hai?',
+        'Bata bhai, aaj ka plan kya hai?',
+        'Chal bata, kya soch raha hai tu?',
+        'Main hoon na yaar, bol freely!',
+        'Kuch bhi pucho, main hoon tere saath!',
+      ];
+      final greeting = greetings[Random().nextInt(greetings.length)];
+      setState(() {
+        _isProcessing = false;
+        _yogResponse = greeting;
+      });
+      await _ttsService.speak(_yogResponse);
+      return;
     }
 
     // Load user settings from SharedPreferences so language & tone are applied
@@ -95,7 +123,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
       tone: userTone,
       plan: 'premium',
       streak: streak,
-      lastMood: 'neutral',
+      lastMood: _currentMood,
       tuYaAap: tuYaAap,
     );
 
@@ -117,6 +145,10 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
     final yogReply = responseData['response'] ?? 'Sorry yaar, kuch gadbad ho gayi.';
     final detectedMood = responseData['mood'] ?? 'neutral';
 
+    // Update mood in UI and persist
+    setState(() { _currentMood = detectedMood; });
+    await prefs.setString('last_mood', detectedMood);
+
     // Store this exchange in history for AI memory
     _conversationHistory.add({'role': 'user', 'content': _recognizedText});
     _conversationHistory.add({'role': 'assistant', 'content': yogReply});
@@ -135,7 +167,6 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
     // Extract and persist tasks from AI response
     final extractedRaw = responseData['extracted_tasks'];
     if (extractedRaw is List && extractedRaw.isNotEmpty && mounted) {
-      final taskProvider = context.read<TaskProvider>();
       final notifService = NotificationService();
       final today = DateTime.now();
       final List<TaskModel> newTasks = [];
@@ -185,6 +216,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _marqueeController?.dispose();
     _ttsService.stop();
     _sttService.stopListening();
     super.dispose();
@@ -196,10 +228,64 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 
+  String get _moodEmoji {
+    switch (_currentMood) {
+      case 'happy': return '😊';
+      case 'excited': return '🤩';
+      case 'sad': return '😢';
+      case 'angry': return '😤';
+      case 'anxious': return '😰';
+      case 'stressed': return '😫';
+      case 'calm': return '😌';
+      case 'tired': return '😴';
+      case 'motivated': return '💪';
+      case 'confused': return '😕';
+      default: return '😐';
+    }
+  }
+
+  String get _moodLabel {
+    switch (_currentMood) {
+      case 'happy': return 'Happy';
+      case 'excited': return 'Excited';
+      case 'sad': return 'Sad';
+      case 'angry': return 'Angry';
+      case 'anxious': return 'Anxious';
+      case 'stressed': return 'Stressed';
+      case 'calm': return 'Calm';
+      case 'tired': return 'Tired';
+      case 'motivated': return 'Motivated';
+      case 'confused': return 'Confused';
+      default: return 'Neutral';
+    }
+  }
+
+  Color get _moodColor {
+    switch (_currentMood) {
+      case 'happy':
+      case 'excited':
+      case 'motivated':
+        return AppTheme.success;
+      case 'sad':
+      case 'tired':
+        return Colors.blue;
+      case 'angry':
+      case 'stressed':
+        return AppTheme.error;
+      case 'anxious':
+      case 'confused':
+        return Colors.orange;
+      case 'calm':
+        return AppTheme.primaryPurple;
+      default:
+        return AppTheme.textGray;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D1A), 
+      backgroundColor: const Color(0xFF0D0D1A),
       body: SafeArea(
         child: Column(
           children: [
@@ -207,35 +293,37 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(width: 40), 
-                  Expanded(
-                    child: Text(
-                      _isProcessing ? 'YOG is thinking...' : 'YOG is listening...',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppTheme.primaryPurple, fontSize: 14),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Color(0xFF2A2A2A),
+                      child: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 16),
                     ),
+                  ),
+                  Expanded(
+                    child: _buildMarqueeStatus(),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppTheme.success.withOpacity(0.2),
+                      color: _moodColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      '😊 Good',
-                      style: TextStyle(color: AppTheme.success, fontSize: 12),
+                    child: Text(
+                      '$_moodEmoji $_moodLabel',
+                      style: TextStyle(color: _moodColor, fontSize: 12),
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             const Spacer(),
 
-            YogAvatar(size: 130, showGlow: true, isPulsing: _isRecording || _isProcessing),
-            
+            YogAvatar(size: 130, showGlow: true, isPulsing: _isRecording || _isProcessing, mood: _currentMood),
+
             const SizedBox(height: 32),
 
             // Transcript or Response
@@ -258,26 +346,42 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
               _formattedTime,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 18, color: AppTheme.textWhite),
             ),
-            
+
             const SizedBox(height: 40),
 
-            // Buttons Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildActionBtn(Icons.close, 'CANCEL', () => Navigator.pop(context), false),
-                const SizedBox(width: 24),
-                _buildActionBtn(Icons.stop, 'STOP', _stopAndProcess, true),
-                const SizedBox(width: 24),
-                _buildActionBtn(_isRecording ? Icons.pause : Icons.mic, _isRecording ? 'PAUSE' : 'SPEAK', () {
-                  if (_isRecording) {
-                    setState(() { _isRecording = false; _timer?.cancel(); });
-                    _sttService.stopListening();
-                  } else {
-                    _startListening();
-                  }
-                }, false),
-              ],
+            // Single toggle button
+            GestureDetector(
+              onTap: _isProcessing ? null : () {
+                if (_isRecording) {
+                  _stopAndProcess();
+                } else {
+                  _startListening();
+                }
+              },
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: _isRecording ? AppTheme.error : AppTheme.primaryPurple,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isRecording ? AppTheme.error : AppTheme.primaryPurple).withOpacity(0.4),
+                      blurRadius: 20,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                  color: Colors.white,
+                  size: 36,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _isRecording ? 'Tap to stop' : (_isProcessing ? 'Processing...' : 'Tap to speak'),
+              style: const TextStyle(color: AppTheme.textGray, fontSize: 12),
             ),
 
             const SizedBox(height: 40),
@@ -287,24 +391,34 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen> {
     );
   }
 
-  Widget _buildActionBtn(IconData icon, String label, VoidCallback onTap, bool isStop) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: isStop ? 64 : 56,
-            height: isStop ? 64 : 56,
-            decoration: BoxDecoration(
-              color: isStop ? AppTheme.error : const Color(0xFF2A2A2A),
-              shape: BoxShape.circle,
+  Widget _buildMarqueeStatus() {
+    final String statusText = _isProcessing ? 'YOG is thinking...' : _isRecording ? 'YOG is listening...' : 'Tap to talk';
+    if (_marqueeController == null) {
+      return Text(statusText, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.primaryPurple, fontSize: 14));
+    }
+    return SizedBox(
+      width: 140,
+      height: 18,
+      child: AnimatedBuilder(
+        animation: _marqueeController!,
+        builder: (context, child) {
+          final double offset = _marqueeController!.value * 280 - 140;
+          return ClipRect(
+            child: Stack(
+              children: [
+                Transform.translate(
+                  offset: Offset(-offset, 0),
+                  child: Text(statusText, style: const TextStyle(color: AppTheme.primaryPurple, fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+                Transform.translate(
+                  offset: Offset(-offset + 280, 0),
+                  child: Text(statusText, style: const TextStyle(color: AppTheme.primaryPurple, fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+              ],
             ),
-            child: Icon(icon, color: AppTheme.textWhite, size: isStop ? 32 : 24),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.textGray)),
-      ],
+          );
+        },
+      ),
     );
   }
 }

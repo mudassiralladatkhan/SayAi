@@ -25,7 +25,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
   bool _isLoading = true;
   bool _wasReferred = false;
   String? _errorMessage;
-  final TextEditingController _codeController = TextEditingController();
 
   @override
   void initState() {
@@ -99,40 +98,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
       _shareMessage,
       subject: 'SayNote AI - Try karo yaar! 🚀',
     );
-  }
-
-  Future<void> _applyCode() async {
-    final code = _codeController.text.trim();
-    if (code.isEmpty) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppTheme.primaryPurple),
-      ),
-    );
-
-    final result = await ReferralService.applyReferralCode(code);
-
-    if (mounted) Navigator.pop(context);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result),
-          backgroundColor: result.startsWith('SUCCESS') ? AppTheme.success : AppTheme.error,
-          duration: const Duration(seconds: 5),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
-
-    if (result.startsWith('SUCCESS')) {
-      _codeController.clear();
-      _loadData();
-    }
   }
 
   @override
@@ -266,8 +231,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
                             Expanded(child: _buildActionBtn(Icons.share_rounded, 'Share', AppTheme.primaryPurple, _shareLink)),
                             const SizedBox(width: 10),
                             Expanded(child: _buildActionBtn(Icons.link_rounded, 'Copy Link', Colors.blue, _copyLink)),
-                            const SizedBox(width: 10),
-                            Expanded(child: _buildActionBtn(Icons.copy_rounded, 'Copy Code', Colors.orange, _copyCode)),
                           ],
                         ),
                       ],
@@ -323,53 +286,27 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
                   const SizedBox(height: 28),
 
-                  // Apply Code Section
+                  // Apply Code Section — only available during onboarding
                   if (!_wasReferred) ...[
-                    const Text('Have a friend\'s code?',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Column(
-                      children: [
-                        TextField(
-                          controller: _codeController,
-                          style: const TextStyle(color: Colors.white, fontSize: 20, letterSpacing: 4),
-                          textCapitalization: TextCapitalization.characters,
-                          maxLength: 6,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: 'Enter Code',
-                            hintStyle: const TextStyle(color: Colors.white24, letterSpacing: 2),
-                            filled: true,
-                            fillColor: const Color(0xFF1A1A2E),
-                            counterText: '',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 1),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.white12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 2),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryPurple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.primaryPurple.withOpacity(0.3)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: AppTheme.primaryPurple, size: 20),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Referral codes can only be applied during sign-up.',
+                              style: TextStyle(color: Colors.white70, fontSize: 13),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: _applyCode,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryPurple,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text('Apply Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ] else ...[
                     Container(
@@ -449,25 +386,18 @@ class _ReferralScreenState extends State<ReferralScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withOpacity(0.3),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.7), width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.45),
-              blurRadius: 14,
-              spreadRadius: 1,
-            ),
-          ],
+          border: Border.all(color: color, width: 1.5),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
+            Icon(icon, color: Colors.white, size: 24),
             const SizedBox(height: 5),
             Text(label,
-                style: TextStyle(
-                  color: color,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.3,

@@ -3,8 +3,7 @@ import '../theme/app_theme.dart';
 import '../screens/home_screen.dart';
 import '../screens/schedule_screen.dart';
 import '../screens/voice_diary_screen.dart';
-import '../screens/settings_screen.dart';
-import '../screens/profile_screen.dart';
+import '../screens/pricing_screen.dart';
 
 class BottomNav extends StatelessWidget {
   final int currentIndex;
@@ -33,7 +32,7 @@ class BottomNav extends StatelessWidget {
         nextScreen = const VoiceDiaryScreen();
         break;
       case 3:
-        nextScreen = const SettingsScreen();
+        nextScreen = const PricingScreen();
         break;
       default:
         return;
@@ -81,12 +80,12 @@ class BottomNav extends StatelessWidget {
             label: 'Schedule',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.mic_rounded),
+            icon: Icon(Icons.menu_book_rounded),
             label: 'Diary',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_rounded),
-            label: 'Settings',
+            icon: Icon(Icons.workspace_premium_rounded),
+            label: 'Plans',
           ),
         ],
       ),

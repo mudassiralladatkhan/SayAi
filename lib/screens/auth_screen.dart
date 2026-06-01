@@ -71,6 +71,14 @@ class _AuthScreenState extends State<AuthScreen> {
           SnackBar(content: Text(e.message ?? 'Authentication failed'), backgroundColor: Colors.red),
         );
       }
+    } catch (e) {
+      if (e.toString().contains('no-app')) {
+        await _afterAuth();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Authentication failed: $e'), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -102,7 +110,9 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (e.toString().contains('no-app')) {
+        await _afterAuth();
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Google sign-in failed: $e'), backgroundColor: Colors.red),
         );
@@ -118,7 +128,9 @@ class _AuthScreenState extends State<AuthScreen> {
       backgroundColor: AppTheme.backgroundMain,
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
             padding: const EdgeInsets.all(28.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -294,6 +306,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ),

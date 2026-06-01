@@ -26,7 +26,6 @@ class AlarmService {
 /// Runs in a separate isolate, so must be self-contained.
 @pragma('vm:entry-point')
 void alarmCallback() async {
-  // Show a notification from the alarm callback isolate
   final plugin = FlutterLocalNotificationsPlugin();
 
   await plugin.initialize(

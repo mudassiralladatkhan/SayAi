@@ -1,26 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
+import '../widgets/bottom_nav.dart';
+import '../services/payment_service.dart';
 import 'addon_screen.dart';
 import 'referral_screen.dart';
 
-class PricingScreen extends StatelessWidget {
+class PricingScreen extends StatefulWidget {
   const PricingScreen({Key? key}) : super(key: key);
+
+  @override
+  State<PricingScreen> createState() => _PricingScreenState();
+}
+
+class _PricingScreenState extends State<PricingScreen> {
+  int _currentIndex = 3;
+  final PaymentService _paymentService = PaymentService();
+  String _userName = 'User';
+  String _currentPlan = 'free';
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentService.init(
+      onPaymentSuccess: _onPaymentSuccess,
+      onPaymentError: _onPaymentError,
+    );
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_name') ?? 'User';
+      _currentPlan = prefs.getString('current_plan') ?? 'free';
+    });
+  }
+
+  void _onPaymentSuccess(String paymentId) {
+    _loadUserData();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Payment successful! Welcome to Premium! 🎉'),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _onPaymentError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment failed: $message'),
+        backgroundColor: AppTheme.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _startPayment(String planName, int amountInPaise) {
+    _paymentService.openCheckout(
+      planName: planName,
+      amountInPaise: amountInPaise,
+      userName: _userName,
+      email: 'user@saynoteai.com',
+      phone: '9999999999',
+    );
+  }
+
+  @override
+  void dispose() {
+    _paymentService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundMain,
-      appBar: AppBar(
-        title: const Text('SayNote AI Plans'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+      body: SafeArea(
         child: Column(
           children: [
-            const Text('YOG ke saath apni zindagi badlo 🚀', style: TextStyle(color: AppTheme.textGray, fontSize: 14)),
-            const SizedBox(height: 24),
-            const Text('15 din free trial — card nahi chahiye', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
-            const SizedBox(height: 24),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    const Text('SayNote AI Plans', style: TextStyle(color: AppTheme.textWhite, fontSize: 26, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    const Text('YOG ke saath apni zindagi badlo 🚀', style: TextStyle(color: AppTheme.textGray, fontSize: 14)),
+                    const SizedBox(height: 24),
+                    const Text('15 din free trial — card nahi chahiye', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
+                    const SizedBox(height: 24),
 
             // Premium Plan (Most prominent)
             _buildPlanCard(
@@ -43,7 +118,8 @@ class PricingScreen extends StatelessWidget {
                 'Early V2 access',
                 'Priority support',
               ],
-              btnLabel: 'Premium Lo Abhi ✨',
+              btnLabel: _currentPlan == 'premium' ? 'CURRENT PLAN ✅' : 'Premium Lo Abhi ✨',
+              onTap: _currentPlan == 'premium' ? null : () => _startPayment('Premium', 29900),
             ),
             const SizedBox(height: 24),
 
@@ -64,7 +140,8 @@ class PricingScreen extends StatelessWidget {
                 'Firebase sync 30 days',
                 'Referral rewards',
               ],
-              btnLabel: 'PRO SHURU KARO',
+              btnLabel: _currentPlan == 'pro' ? 'CURRENT PLAN ✅' : 'PRO SHURU KARO',
+              onTap: _currentPlan == 'pro' ? null : () => _startPayment('Pro', 14900),
             ),
             const SizedBox(height: 24),
 
@@ -82,22 +159,49 @@ class PricingScreen extends StatelessWidget {
                 'Voice diary (No)',
                 'Premium alarm scripts (No)',
               ],
-              btnLabel: 'CURRENT PLAN',
+              btnLabel: _currentPlan == 'free' ? 'CURRENT PLAN' : 'FREE PLAN',
               isFree: true,
             ),
             const SizedBox(height: 32),
 
             // Add-on Packs Section
-            const Align(alignment: Alignment.centerLeft, child: Text('Add-on Packs', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.primaryPurple, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryPurple.withOpacity(0.3),
+                    blurRadius: 16,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Customize karo apna plan', style: TextStyle(color: AppTheme.textWhite)),
+                  Row(
+                    children: [
+                      const Icon(Icons.extension_rounded, color: AppTheme.primaryPurple, size: 22),
+                      const SizedBox(width: 10),
+                      const Text('Add-on Packs', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.textWhite)),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryPurple.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text('CUSTOM', style: TextStyle(color: AppTheme.primaryPurple, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
+                  const Text('Customize karo apna plan — sirf wahi lo jo chahiye!', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
@@ -107,9 +211,17 @@ class PricingScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  OutlinedButton(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddonScreen())),
-                    child: const Text('CUSTOM PACK BANAO'),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddonScreen())),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryPurple,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('CUSTOM PACK BANAO →', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
                   ),
                 ],
               ),
@@ -136,6 +248,14 @@ class PricingScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+            BottomNav(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+            ),
           ],
         ),
       ),
@@ -152,6 +272,7 @@ class PricingScreen extends StatelessWidget {
     String? badge,
     required List<String> features,
     required String btnLabel,
+    VoidCallback? onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -202,24 +323,27 @@ class PricingScreen extends StatelessWidget {
                 )).toList(),
                 const SizedBox(height: 24),
                 if (isPremium)
-                  Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [AppTheme.primaryPurple, AppTheme.gold]),
-                      borderRadius: BorderRadius.circular(14),
+                  GestureDetector(
+                    onTap: onTap,
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [AppTheme.primaryPurple, AppTheme.gold]),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(child: Text(btnLabel, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16))),
                     ),
-                    child: Center(child: Text(btnLabel, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16))),
                   )
                 else if (isPro)
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: onTap,
                     style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.primaryPurple)),
                     child: Text(btnLabel, style: const TextStyle(color: AppTheme.primaryPurple)),
                   )
                 else
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: onTap,
                     child: Text(btnLabel, style: const TextStyle(color: AppTheme.textGray)),
                   ),
               ],

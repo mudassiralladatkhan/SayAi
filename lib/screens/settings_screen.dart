@@ -3,10 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
-import '../widgets/bottom_nav.dart';
 import '../providers/task_provider.dart';
 import '../services/user_service.dart';
-import 'pricing_screen.dart';
 import 'profile_screen.dart';
 import 'alarm_screen.dart';
 import 'night_checkin_screen.dart';
@@ -57,7 +55,9 @@ class _PersonalizeScreenState extends State<PersonalizeScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', name);
     await prefs.setString('user_tone', _selectedTone);
+    await prefs.setString('yog_tone', _selectedTone);
     await prefs.setString('user_language', _selectedLanguage);
+    await prefs.setString('yog_language', _selectedLanguage);
     await prefs.setBool('tu_ya_aap', _tuYaAap);
     await prefs.setBool('shayari_enabled', _shayariEnabled);
 
@@ -564,11 +564,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  int _currentIndex = 3;
   String _userName = 'Guest';
   String _tone = 'yaar';
   String _language = 'Hinglish';
-  bool _isPremium = false;
 
   @override
   void initState() {
@@ -582,7 +580,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _userName = prefs.getString('user_name') ?? 'Guest';
       _tone = prefs.getString('user_tone') ?? 'yaar';
       _language = prefs.getString('user_language') ?? 'Hinglish';
-      _isPremium = prefs.getBool('is_premium') ?? false;
     });
   }
 
@@ -600,20 +597,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundMain,
-      body: SafeArea(
+      appBar: AppBar(
+        backgroundColor: AppTheme.backgroundMain,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textWhite, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Settings', style: TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    const Text('Settings', style: TextStyle(color: AppTheme.textWhite, fontSize: 26, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    const Text('Customize your experience', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
-                    const SizedBox(height: 24),
 
                     // User Card — taps to Profile
                     GestureDetector(
@@ -690,14 +687,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _sectionHeader('Account'),
                     const SizedBox(height: 10),
                     _navTile(
-                      icon: Icons.workspace_premium_outlined,
-                      iconColor: const Color(0xFFFFD700),
-                      label: 'Plan',
-                      subtitle: _isPremium ? '⭐ Premium — Active' : 'Free Plan',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PricingScreen())),
-                    ),
-                    const SizedBox(height: 8),
-                    _navTile(
                       icon: Icons.delete_outline,
                       iconColor: const Color(0xFFE53935),
                       label: 'Clear All Data',
@@ -734,14 +723,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
-            ),
-            BottomNav(
-              currentIndex: _currentIndex,
-              onTap: (index) => setState(() => _currentIndex = index),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

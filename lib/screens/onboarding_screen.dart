@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 import '../services/user_service.dart';
+import '../services/referral_service.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -16,6 +17,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String _selectedLanguage = 'Hinglish';
   int _currentPage = 0;
   String _userName = '';
+  String _wakeWord = 'Hey YOG';
+  final TextEditingController _referralController = TextEditingController();
+  final TextEditingController _wakeWordController = TextEditingController(text: 'Hey YOG');
+  bool _isApplyingCode = false;
+  String? _referralMessage;
 
   @override
   void initState() {
@@ -90,6 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setString('user_name', _userName);
     await prefs.setString('yog_tone', _selectedTone);
     await prefs.setString('yog_language', _selectedLanguage);
+    await prefs.setString('wake_word', _wakeWord.isNotEmpty ? _wakeWord : 'Hey YOG');
     await prefs.setBool('has_onboarded', true);
 
     // Navigate immediately — don't block on Firestore
@@ -111,12 +118,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundMain,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: _currentPage == 0
             ? _buildWelcomePage()
             : _currentPage == 1
                 ? _buildTonePage()
-                : _buildLanguagePage(),
+                : _currentPage == 2
+                    ? _buildLanguagePage()
+                    : _currentPage == 3
+                        ? _buildWakeWordPage()
+                        : _buildReferralPage(),
       ),
     );
   }
@@ -151,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildTonePage() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildLanguagePage() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,10 +244,181 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             () => setState(() => _selectedLanguage = 'Hindi'),
           ),
           const SizedBox(height: 32),
-          _buildNextButton(_completeOnboarding, label: "Let's Go! 🚀"),
+          _buildNextButton(() => setState(() => _currentPage = 3), label: "Next →"),
         ],
       ),
     );
+  }
+
+  Widget _buildWakeWordPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+          const Text(
+            'Wake Word 🎙️',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.textWhite),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'YOG will only respond when you say this word. Choose something easy to say!',
+            style: TextStyle(fontSize: 16, color: AppTheme.textGray),
+          ),
+          const SizedBox(height: 32),
+          TextField(
+            controller: _wakeWordController,
+            style: const TextStyle(color: Colors.white, fontSize: 20),
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              hintText: 'e.g. Hey YOG',
+              hintStyle: const TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: AppTheme.backgroundCardMedium,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.primaryPurple),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Colors.white12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 2),
+              ),
+              prefixIcon: const Icon(Icons.mic_rounded, color: AppTheme.primaryPurple),
+            ),
+            onChanged: (val) => _wakeWord = val.trim(),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryPurple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.primaryPurple.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('Suggestions:', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                SizedBox(height: 8),
+                Text('• Hey YOG', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
+                Text('• OK YOG', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
+                Text('• Sun YOG', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
+                Text('• Bol YOG', style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          _buildNextButton(() => setState(() => _currentPage = 4), label: "Next →"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReferralPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+          const Text(
+            'Referral Code 🎁',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.textWhite),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Got a friend\'s code? Enter it for 3 bonus days!',
+            style: TextStyle(fontSize: 16, color: AppTheme.textGray),
+          ),
+          const SizedBox(height: 32),
+          TextField(
+            controller: _referralController,
+            style: const TextStyle(color: Colors.white, fontSize: 22, letterSpacing: 4),
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 6,
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: 'ENTER CODE',
+              hintStyle: const TextStyle(color: Colors.white24, letterSpacing: 2),
+              filled: true,
+              fillColor: AppTheme.backgroundCardMedium,
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.primaryPurple),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Colors.white12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppTheme.primaryPurple, width: 2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_referralMessage != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _referralMessage!.startsWith('SUCCESS')
+                    ? AppTheme.success.withOpacity(0.15)
+                    : AppTheme.error.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _referralMessage!.replaceFirst('SUCCESS: ', ''),
+                style: TextStyle(
+                  color: _referralMessage!.startsWith('SUCCESS') ? AppTheme.success : AppTheme.error,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isApplyingCode ? null : _applyReferralCode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryPurple,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: _isApplyingCode
+                  ? const SizedBox(
+                      height: 20, width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text('Apply Code', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ),
+          const SizedBox(height: 40),
+          _buildNextButton(_completeOnboarding, label: "Skip"),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _applyReferralCode() async {
+    final code = _referralController.text.trim();
+    if (code.isEmpty) {
+      setState(() => _referralMessage = 'Please enter a referral code.');
+      return;
+    }
+    setState(() { _isApplyingCode = true; _referralMessage = null; });
+    final result = await ReferralService.applyReferralCode(code);
+    if (mounted) {
+      setState(() {
+        _isApplyingCode = false;
+        _referralMessage = result;
+      });
+    }
   }
 
   Widget _buildOptionCard(String title, String subtitle, bool isSelected, VoidCallback onTap) {

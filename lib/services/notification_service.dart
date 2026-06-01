@@ -51,7 +51,6 @@ class NotificationService {
 
     final id = task.id.hashCode.abs() % 100000;
 
-    // v21: all named parameters
     await _plugin.show(
       id: id,
       title: '✅ Task Added: ${task.title}',
@@ -63,7 +62,6 @@ class NotificationService {
 
   /// Cancel a specific task's notification by its ID
   Future<void> cancelTaskNotification(String taskId) async {
-    // v21: named parameter is 'id:'
     await _plugin.cancel(id: taskId.hashCode.abs() % 100000);
   }
 
@@ -78,7 +76,7 @@ class NotificationService {
 
     final now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, time.hour, time.minute);
-    
+
     // If time has already passed today, schedule for tomorrow
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
@@ -97,15 +95,15 @@ class NotificationService {
     );
 
     await _plugin.zonedSchedule(
-      id: 99999, // id
-      title: '⏰ Utho Yaar!', // title
-      body: 'YOG is waiting for your morning check-in.', // body
+      id: 99999,
+      title: '⏰ Utho Yaar!',
+      body: 'YOG is waiting for your morning check-in.',
       scheduledDate: scheduledDate,
       notificationDetails: const NotificationDetails(android: androidDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time, // Repeat daily at this time
+      matchDateTimeComponents: DateTimeComponents.time,
     );
 
-    debugPrint('NotificationService: Daily alarm scheduled for \${time.hour}:\${time.minute}');
+    debugPrint('NotificationService: Daily alarm scheduled for ${time.hour}:${time.minute}');
   }
 }

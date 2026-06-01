@@ -308,6 +308,21 @@ class UserService {
     } catch (_) {}
   }
 
+  static Future<void> savePlanInfo({
+    required String plan,
+    required String paymentId,
+  }) async {
+    if (_uid == null) return;
+    try {
+      await _firestore.collection('users').doc(_uid).set({
+        'plan': plan,
+        'payment_id': paymentId,
+        'plan_start_date': FieldValue.serverTimestamp(),
+        'is_premium': true,
+      }, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
   static Future<String> getPlan() async {
     final prefs = await SharedPreferences.getInstance();
     final cached = prefs.getString('user_plan');

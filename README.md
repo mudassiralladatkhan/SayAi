@@ -1,95 +1,196 @@
-# SayNote AI 🎙️
+<div align="center">
 
-> Your voice-first AI life companion for Indian users — powered by Groq & LLaMA 3.
+# 🗣️ SayAi (SayNote AI)
 
----
+### Voice-First AI Life Assistant for India
 
-## Features
+[![Flutter](https://img.shields.io/badge/Flutter-3.2+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth+Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Dart](https://img.shields.io/badge/Dart-3.2+-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web-green?style=for-the-badge)](.)
 
-- 🎙️ **Voice-first interface** — speak to YOG, your personal AI assistant
-- ✅ **Smart task management** — add, complete, and delete tasks via voice or text
-- 🔥 **Streak tracking** — stay consistent with daily productivity streaks
-- ⏰ **Alarm & reminders** — personalized TTS wake-up alarms
-- 📓 **Night check-in** — daily mood & reflection diary
-- 🤖 **YOG personality** — choose Chill Yaar, Strict Coach, or Funny Bestie mode
-- 🌐 **Hinglish, Hindi & English** — talk to YOG in your preferred language
-- ☁️ **Cloud sync** — all data synced to Firebase Firestore across devices
-- 🔐 **Authentication** — Email/Password + Google Sign-In via Firebase Auth
+<br/>
 
----
+**Your AI-powered voice companion — task management, voice journaling, AI conversations, smart reminders, and payments. Built for Indian users with Hinglish support.**
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Flutter (Dart) |
-| AI Backend | Groq API (LLaMA 3 70B) |
-| Auth | Firebase Authentication |
-| Database | Cloud Firestore |
-| Local Storage | SharedPreferences |
-| Notifications | flutter_local_notifications |
-| TTS | flutter_tts |
-| STT | speech_to_text |
+[Features](#-features) · [Architecture](#-architecture) · [Setup](#-setup) · [App Flow](#-app-flow)
 
 ---
 
-## Setup
+</div>
 
-### Prerequisites
-- Flutter SDK ≥ 3.2.0
-- Firebase project with Android app configured
-- Groq API key
+## 🎯 What is SayAi?
 
-### Steps
-
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/mudassiralladatkhan/SayAi.git
-   cd SayAi
-   ```
-
-2. **Add your secrets**
-   - Create `.env` in the project root:
-     ```
-     GROQ_API_KEY=your_groq_api_key_here
-     ```
-   - Add `android/app/google-services.json` from your Firebase Console
-
-3. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
-
-4. **Run**
-   ```bash
-   flutter run
-   ```
+SayAi is a cross-platform voice-first assistant that combines:
+- 🎙️ **Voice capture** — speak naturally in Hindi/English, AI organizes your thoughts
+- 🧠 **AI conversations** — Groq-powered (LLaMA 3 70B) contextual chat with personality modes
+- ✅ **Smart task management** — voice-to-task with deadline detection and streak tracking
+- 📓 **Voice diary** — daily journaling with mood analysis and night check-ins
+- ⏰ **Intelligent alarms** — TTS-powered personalized wake-up calls
+- 💰 **Razorpay subscriptions** — premium tier with Indian payment rails
+- 🔒 **Biometric security** — fingerprint/face unlock via `local_auth`
 
 ---
 
-## Firebase Setup
+## ✨ Features
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Authentication** → Email/Password + Google
-3. Enable **Cloud Firestore**
-4. Download `google-services.json` and place in `android/app/`
-5. Add your **SHA-1 fingerprint** to the Firebase Android app
+| Feature | Implementation |
+|---------|---------------|
+| 🎤 Voice Input | `speech_to_text` with Hindi/English/Hinglish support |
+| 🔊 Voice Output | `flutter_tts` with natural speech synthesis |
+| 🤖 AI Chat (YOG) | Groq API (LLaMA 3 70B) with personality modes: Chill Yaar, Strict Coach, Funny Bestie |
+| 📋 Task Manager | Provider state + Firebase Firestore persistence + streak tracking |
+| 📓 Voice Diary | Audio capture → transcription → mood tagging |
+| 🌙 Night Check-in | Guided evening reflection and mood journaling |
+| ⏰ Smart Alarms | `android_alarm_manager_plus` + personalized TTS wake-up |
+| 👤 User Profiles | Firebase Auth (Email + Google Sign-In) |
+| 💳 Payments | Razorpay Flutter SDK for premium subscriptions |
+| 🔔 Notifications | Firebase Cloud Messaging + Local Notifications |
+| 🎁 Referral System | Invite tracking with reward points |
+| 🔒 Biometric Auth | `local_auth` fingerprint/face unlock |
+| 🎨 Onboarding | Animated Lottie-powered first-run experience |
+| 🌐 Multi-language | Hindi, English, and Hinglish support |
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 lib/
-├── main.dart              # App entry + Firebase init + routing
-├── theme/                 # AppTheme constants
-├── models/                # TaskModel
-├── providers/             # TaskProvider (state + Firestore sync)
-├── services/              # GPT, Notification, UserService
-├── screens/               # All app screens
-└── widgets/               # Reusable UI components
+├── main.dart                     # App entry, Firebase init, auth routing
+├── models/                       # Data models (TaskModel, etc.)
+├── providers/
+│   └── task_provider.dart        # State management + Firestore sync
+├── screens/
+│   ├── home_screen.dart          # Main hub
+│   ├── voice_capture_screen.dart # Voice input UI
+│   ├── voice_diary_screen.dart   # Daily journal
+│   ├── conversation_screen.dart  # AI chat with YOG
+│   ├── alarm_screen.dart         # Alarm management
+│   ├── schedule_screen.dart      # Calendar view
+│   ├── night_checkin_screen.dart # Evening reflection
+│   ├── pricing_screen.dart       # Subscription plans
+│   ├── profile_screen.dart       # User settings & streaks
+│   ├── referral_screen.dart      # Invite friends
+│   ├── addon_screen.dart         # Premium add-ons
+│   ├── settings_screen.dart      # App configuration
+│   ├── auth_screen.dart          # Login/signup
+│   └── onboarding_screen.dart    # First-run walkthrough
+├── services/
+│   ├── gpt_service.dart          # Groq/LLaMA 3 integration
+│   ├── stt_service.dart          # Speech-to-text
+│   ├── tts_service.dart          # Text-to-speech
+│   ├── firebase_service.dart     # Firestore operations
+│   ├── razorpay_service.dart     # Payment processing
+│   ├── payment_service.dart      # Subscription management
+│   ├── notification_service.dart # Push & local notifications
+│   ├── alarm_service.dart        # Alarm scheduling
+│   ├── referral_service.dart     # Referral tracking
+│   └── user_service.dart         # Profile, streak & analytics
+├── theme/
+│   └── app_theme.dart            # Material 3 theming
+└── widgets/                      # Reusable UI components
 ```
 
 ---
 
-*Built with ❤️ for India*
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Flutter 3.2+ (Android, iOS, Web) |
+| Language | Dart |
+| AI Backend | Groq API (LLaMA 3 70B) |
+| Auth | Firebase Auth + Google Sign-In |
+| Database | Cloud Firestore |
+| Local Storage | SharedPreferences |
+| Voice | `speech_to_text` + `flutter_tts` |
+| Payments | Razorpay Flutter SDK |
+| Notifications | FCM + `flutter_local_notifications` |
+| Alarms | `android_alarm_manager_plus` |
+| Animations | Lottie |
+| Security | `local_auth` (biometrics) |
+| Screenshots | `screenshot` + `share_plus` |
+
+---
+
+## 🚀 Setup
+
+### Prerequisites
+- Flutter SDK 3.2+
+- Firebase project configured
+- Groq API key
+- Android Studio / Xcode
+
+### Installation
+
+```bash
+git clone https://github.com/mudassiralladatkhan/SayAi.git
+cd SayAi
+
+# Create .env file
+echo "GROQ_API_KEY=your_groq_api_key_here" > .env
+
+# Add Firebase config
+# Place google-services.json in android/app/
+
+# Install dependencies
+flutter pub get
+
+# Run on connected device
+flutter run
+```
+
+### Firebase Setup
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable **Authentication** → Email/Password + Google
+3. Enable **Cloud Firestore**
+4. Download `google-services.json` → `android/app/`
+5. Add your **SHA-1 fingerprint** to Firebase Android app
+6. Enable **Firebase Cloud Messaging** for push notifications
+
+---
+
+## 📱 App Flow
+
+```
+Splash → Auth (Email/Google) → Onboarding → Home
+                                              ├── 🎤 Voice Capture (record → transcribe → action)
+                                              ├── 🤖 AI Chat with YOG (3 personality modes)
+                                              ├── ✅ Tasks (voice-created, streak-tracked)
+                                              ├── 📓 Voice Diary (daily entries)
+                                              ├── ⏰ Alarms & Schedule
+                                              ├── 🌙 Night Check-in (evening reflection)
+                                              ├── 💳 Pricing & Add-ons
+                                              └── 👤 Profile (streaks, referrals, settings)
+```
+
+---
+
+## 🎯 Target Users
+
+- 🇮🇳 Indian users comfortable with voice input
+- Professionals wanting voice-first productivity
+- Users who prefer speaking over typing
+- Hindi + English bilingual speakers
+- Students needing task/schedule management
+
+---
+
+## 🤖 YOG Personality Modes
+
+| Mode | Vibe |
+|------|------|
+| 😎 **Chill Yaar** | Casual, supportive, friend-like |
+| 🏋️ **Strict Coach** | Direct, disciplined, accountability |
+| 😂 **Funny Bestie** | Humorous, lighthearted, encouraging |
+
+---
+
+<div align="center">
+
+**Built with 🗣️ by [Mudassir Alladatkhan](https://github.com/mudassiralladatkhan)**
+
+*Speak your mind. Let AI handle the rest.*
+
+</div>
